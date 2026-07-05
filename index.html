@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fizz the Number Buddy — Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF7E9;
+    --pink:#FF6F91;
+    --pink-dark:#E85677;
+    --yellow:#FFC93C;
+    --yellow-dark:#F0AE13;
+    --blue:#49C6E5;
+    --blue-dark:#2AA9C9;
+    --green:#6BCB77;
+    --green-dark:#4FAE5B;
+    --plum:#3A2E45;
+    --plum-soft:#6b5f77;
+    --white:#FFFFFF;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:
+      radial-gradient(circle at 12% 15%, #FFE1A8 0%, transparent 35%),
+      radial-gradient(circle at 88% 85%, #BDEBFF 0%, transparent 40%),
+      var(--cream);
+    font-family:"Baloo 2", "Comic Sans MS", "Segoe UI", sans-serif;
+    color:var(--plum);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .app{
+    width:100%;
+    max-width:420px;
+  }
+  .header{
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .header .title{
+    font-size:28px;
+    font-weight:800;
+    margin:0;
+    color:var(--plum);
+  }
+  .header .title .hi{ color:var(--pink-dark); }
+  .header .sub{
+    font-size:15px;
+    color:var(--plum-soft);
+    margin-top:2px;
+    font-weight:500;
+  }
+
+  .card{
+    background:var(--white);
+    border-radius:32px;
+    padding:18px;
+    box-shadow: 0 14px 0 rgba(58,46,69,0.08), 0 20px 40px rgba(58,46,69,0.12);
+  }
+
+  .face-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:10px;
+  }
+  .face{
+    font-size:44px;
+    transition: transform .15s ease;
+    user-select:none;
+  }
+  .face.bounce{ animation: bounce .5s ease; }
+  @keyframes bounce{
+    0%{ transform:scale(1) rotate(0deg); }
+    30%{ transform:scale(1.25) rotate(-6deg); }
+    60%{ transform:scale(0.95) rotate(4deg); }
+    100%{ transform:scale(1) rotate(0deg); }
+  }
+
+  .display{
+    background:linear-gradient(180deg, #FFFDF8, #FFF3D9);
+    border:3px solid var(--yellow);
+    border-radius:22px;
+    padding:16px 18px;
+    margin-bottom:16px;
+    min-height:96px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-end;
+    overflow:hidden;
+  }
+  .display .prev{
+    font-size:16px;
+    font-weight:600;
+    color:var(--plum-soft);
+    min-height:20px;
+  }
+  .display .current{
+    font-size:40px;
+    font-weight:800;
+    color:var(--plum);
+    word-break:break-all;
+    text-align:right;
+    width:100%;
+  }
+  .display.wobble{ animation: wobble .4s ease; }
+  @keyframes wobble{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+
+  .keys{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:10px;
+  }
+  button.key{
+    border:none;
+    border-radius:18px;
+    font-family:inherit;
+    font-size:24px;
+    font-weight:700;
+    padding:0;
+    height:64px;
+    cursor:pointer;
+    color:var(--white);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+    transition: transform .05s ease, box-shadow .05s ease, filter .1s ease;
+  }
+  button.key:active{
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  }
+  .num{ background:var(--blue); }
+  .num:hover{ filter:brightness(1.06); }
+  .op{ background:var(--pink); }
+  .op:hover{ filter:brightness(1.06); }
+  .fn{ background:var(--yellow); color:var(--plum); }
+  .fn:hover{ filter:brightness(1.05); }
+  .eq{ background:var(--green); grid-column: span 2; font-size:26px; }
+  .eq:hover{ filter:brightness(1.06); }
+  .zero{ grid-column: span 2; }
+
+  .footer-hint{
+    text-align:center;
+    margin-top:14px;
+    font-size:13px;
+    color:var(--plum-soft);
+    font-weight:600;
+  }
+
+  @media (max-width:380px){
+    button.key{ height:56px; font-size:21px; }
+    .display .current{ font-size:32px; }
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    border-radius:16px;
+    padding:12px 8px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    background:var(--white);
+    color:var(--plum-soft);
+    box-shadow: 0 4px 0 rgba(58,46,69,0.08);
+    transition: transform .05s ease, background .15s ease, color .15s ease;
+  }
+  .tab-btn.active{
+    background:var(--pink);
+    color:var(--white);
+  }
+  .tab-btn:active{ transform:translateY(2px); }
+
+  /* ---------- Number Grids ---------- */
+  .size-row, .op-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+  .choice-btn{
+    border:none;
+    border-radius:14px;
+    padding:9px 14px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    background:#F1EEFB;
+    color:var(--plum);
+    box-shadow: 0 4px 0 rgba(58,46,69,0.06);
+  }
+  .choice-btn.active{
+    background:var(--blue);
+    color:var(--white);
+  }
+  .choice-btn:active{ transform:translateY(2px); }
+
+  .grid-label{
+    text-align:center;
+    font-weight:700;
+    font-size:14px;
+    color:var(--plum-soft);
+    margin:6px 0 8px;
+  }
+  .grid-box{
+    display:inline-grid;
+    gap:8px;
+    margin:0 auto 16px;
+    justify-content:center;
+  }
+  .grid-cell{
+    width:56px;
+    height:56px;
+    border-radius:12px;
+    border:2px solid var(--blue);
+    text-align:center;
+    font-family:inherit;
+    font-size:20px;
+    font-weight:700;
+    color:var(--plum);
+    background:#F5FCFF;
+  }
+  .grid-cell:focus{ outline:none; border-color:var(--pink); }
+  .grid-cell.readonly{
+    background:#F2FBF3;
+    border-color:var(--green);
+    color:var(--green-dark);
+    cursor:default;
+  }
+  .grid-wrap{ text-align:center; }
+
+  .scalar-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:14px;
+    font-weight:700;
+  }
+  .scalar-row input{
+    width:70px;
+    height:48px;
+    border-radius:12px;
+    border:2px solid var(--yellow);
+    text-align:center;
+    font-family:inherit;
+    font-size:18px;
+    font-weight:700;
+    color:var(--plum);
+    background:#FFFBF0;
+  }
+
+  .go-grid-btn{
+    display:block;
+    width:100%;
+    border:none;
+    border-radius:16px;
+    padding:14px;
+    font-family:inherit;
+    font-size:18px;
+    font-weight:800;
+    color:var(--white);
+    background:var(--green);
+    cursor:pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+    margin-top:4px;
+  }
+  .go-grid-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
+
+  .grid-result{
+    margin-top:16px;
+    text-align:center;
+  }
+  .grid-msg{
+    font-size:14px;
+    font-weight:700;
+    color:var(--pink-dark);
+    min-height:20px;
+    margin-top:6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <p class="title">🧮 <span class="hi">Fizz's</span> Calculator</p>
+    <p class="sub">Tap the buttons and watch the magic happen!</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-calc" onclick="showView('calc')">🧮 Calculator</button>
+    <button class="tab-btn" id="tab-grid" onclick="showView('grid')">🧩 Number Grids</button>
+  </div>
+
+  <div class="card" id="view-calc">
+    <div class="face-row">
+      <div class="face" id="face">😊</div>
+    </div>
+
+    <div class="display" id="display">
+      <div class="prev" id="prev">&nbsp;</div>
+      <div class="current" id="current">0</div>
+    </div>
+
+    <div class="keys">
+      <button class="key fn" onclick="clearAll()">C</button>
+      <button class="key fn" onclick="backspace()">⌫</button>
+      <button class="key fn" onclick="toggleSign()">±</button>
+      <button class="key op" onclick="chooseOp('÷')">÷</button>
+
+      <button class="key num" onclick="inputDigit('7')">7</button>
+      <button class="key num" onclick="inputDigit('8')">8</button>
+      <button class="key num" onclick="inputDigit('9')">9</button>
+      <button class="key op" onclick="chooseOp('×')">×</button>
+
+      <button class="key num" onclick="inputDigit('4')">4</button>
+      <button class="key num" onclick="inputDigit('5')">5</button>
+      <button class="key num" onclick="inputDigit('6')">6</button>
+      <button class="key op" onclick="chooseOp('−')">−</button>
+
+      <button class="key num" onclick="inputDigit('1')">1</button>
+      <button class="key num" onclick="inputDigit('2')">2</button>
+      <button class="key num" onclick="inputDigit('3')">3</button>
+      <button class="key op" onclick="chooseOp('+')">+</button>
+
+      <button class="key num zero" onclick="inputDigit('0')">0</button>
+      <button class="key num" onclick="inputDot()">.</button>
+      <button class="key eq" onclick="doEquals()">=</button>
+    </div>
+  </div>
+
+  <div class="card" id="view-grid" style="display:none;">
+    <div class="face-row">
+      <div class="face" id="grid-face">🧩</div>
+    </div>
+
+    <p class="grid-label" style="margin-top:0;">How big is your grid?</p>
+    <div class="size-row" id="size-row">
+      <button class="choice-btn active" onclick="setSize(2,2,this)">2 × 2</button>
+      <button class="choice-btn" onclick="setSize(2,3,this)">2 × 3</button>
+      <button class="choice-btn" onclick="setSize(3,3,this)">3 × 3</button>
+    </div>
+
+    <p class="grid-label">What do you want to do?</p>
+    <div class="op-row" id="op-row">
+      <button class="choice-btn active" onclick="setGridOp('add',this)">➕ Put Together</button>
+      <button class="choice-btn" onclick="setGridOp('sub',this)">➖ Take Away</button>
+      <button class="choice-btn" onclick="setGridOp('scale',this)">✨ Make Bigger</button>
+      <button class="choice-btn" onclick="setGridOp('flip',this)">🔄 Spin It</button>
+    </div>
+
+    <div class="grid-wrap">
+      <p class="grid-label">Grid A</p>
+      <div class="grid-box" id="gridA"></div>
+    </div>
+
+    <div id="gridB-wrap" class="grid-wrap">
+      <p class="grid-label">Grid B</p>
+      <div class="grid-box" id="gridB"></div>
+    </div>
+
+    <div class="scalar-row" id="scalar-row" style="display:none;">
+      <span>Multiply every box by</span>
+      <input type="number" id="scalar-input" value="2">
+    </div>
+
+    <button class="go-grid-btn" onclick="runGrid()">Show Me! ✨</button>
+
+    <div class="grid-result" id="grid-result-wrap" style="display:none;">
+      <p class="grid-label">Here you go!</p>
+      <div class="grid-box" id="gridResult"></div>
+    </div>
+    <p class="grid-msg" id="grid-msg">&nbsp;</p>
+  </div>
+
+  <p class="footer-hint" id="footer-hint">Try: 3 ➜ + ➜ 5 ➜ = 🎉</p>
+</div>
+
+<script>
+let current = "0";
+let previous = null;
+let operator = null;
+let justEvaluated = false;
+
+const currentEl = document.getElementById('current');
+const prevEl = document.getElementById('prev');
+const faceEl = document.getElementById('face');
+const displayEl = document.getElementById('display');
+
+const FACES = {
+  neutral: "😊",
+  thinking: "🤔",
+  happy: "😄",
+  wow: "🤩",
+  oops: "😵",
+  cool: "😎"
+};
+
+function setFace(key, bounce){
+  faceEl.textContent = FACES[key] || FACES.neutral;
+  if(bounce){
+    faceEl.classList.remove('bounce');
+    void faceEl.offsetWidth; // restart animation
+    faceEl.classList.add('bounce');
+  }
+}
+
+function shakeDisplay(){
+  displayEl.classList.remove('wobble');
+  void displayEl.offsetWidth;
+  displayEl.classList.add('wobble');
+}
+
+function render(){
+  currentEl.textContent = current;
+  if(operator && previous !== null){
+    prevEl.textContent = previous + " " + operator;
+  } else {
+    prevEl.textContent = "\u00A0";
+  }
+}
+
+function inputDigit(d){
+  if(justEvaluated){
+    current = d;
+    justEvaluated = false;
+  } else if(current === "0"){
+    current = d;
+  } else {
+    if(current.replace('-','').replace('.','').length >= 10) return; // keep numbers kid-sized
+    current += d;
+  }
+  setFace('neutral', false);
+  render();
+}
+
+function inputDot(){
+  if(justEvaluated){
+    current = "0.";
+    justEvaluated = false;
+  } else if(!current.includes('.')){
+    current += ".";
+  }
+  render();
+}
+
+function toggleSign(){
+  if(current === "0") return;
+  current = current.startsWith('-') ? current.slice(1) : '-' + current;
+  render();
+}
+
+function backspace(){
+  if(justEvaluated){
+    clearAll();
+    return;
+  }
+  current = current.length > 1 ? current.slice(0, -1) : "0";
+  render();
+}
+
+function clearAll(){
+  current = "0";
+  previous = null;
+  operator = null;
+  justEvaluated = false;
+  setFace('neutral', false);
+  render();
+}
+
+function chooseOp(op){
+  if(operator !== null && !justEvaluated){
+    compute();
+  }
+  previous = current;
+  operator = op;
+  justEvaluated = false;
+  current = "0";
+  setFace('thinking', true);
+  render();
+}
+
+function compute(){
+  const a = parseFloat(previous);
+  const b = parseFloat(current);
+  if(isNaN(a) || isNaN(b)) return;
+  let result;
+  if(operator === '+') result = a + b;
+  else if(operator === '−') result = a - b;
+  else if(operator === '×') result = a * b;
+  else if(operator === '÷'){
+    if(b === 0){
+      current = "Oops! Can't ÷ 0";
+      previous = null; operator = null; justEvaluated = true;
+      setFace('oops', true);
+      shakeDisplay();
+      render();
+      return;
+    }
+    result = a / b;
+  }
+  result = Math.round(result * 1e8) / 1e8;
+  current = String(result);
+  previous = null;
+}
+
+function doEquals(){
+  if(operator === null){
+    setFace('neutral', true);
+    return;
+  }
+  const a = parseFloat(previous);
+  const b = parseFloat(current);
+  compute();
+  operator = null;
+  justEvaluated = true;
+
+  const resultNum = parseFloat(current);
+  if(!isNaN(resultNum)){
+    if(Math.abs(resultNum) >= 1000){
+      setFace('wow', true);
+    } else if(resultNum === a + b || resultNum > 0){
+      setFace('happy', true);
+    } else {
+      setFace('cool', true);
+    }
+  }
+  render();
+}
+
+render();
+
+/* Allow keyboard use too, for grown-ups helping out */
+window.addEventListener('keydown', (e)=>{
+  if(document.getElementById('view-calc').style.display === 'none') return;
+  if(e.key >= '0' && e.key <= '9') inputDigit(e.key);
+  else if(e.key === '.') inputDot();
+  else if(e.key === '+') chooseOp('+');
+  else if(e.key === '-') chooseOp('−');
+  else if(e.key === '*') chooseOp('×');
+  else if(e.key === '/') chooseOp('÷');
+  else if(e.key === 'Enter' || e.key === '=') doEquals();
+  else if(e.key === 'Backspace') backspace();
+  else if(e.key === 'Escape') clearAll();
+});
+
+/* ========================= TABS ========================= */
+function showView(which){
+  const isCalc = which === 'calc';
+  document.getElementById('view-calc').style.display = isCalc ? 'block' : 'none';
+  document.getElementById('view-grid').style.display = isCalc ? 'none' : 'block';
+  document.getElementById('tab-calc').classList.toggle('active', isCalc);
+  document.getElementById('tab-grid').classList.toggle('active', !isCalc);
+  document.getElementById('footer-hint').textContent = isCalc
+    ? "Try: 3 ➜ + ➜ 5 ➜ = 🎉"
+    : "Fill the boxes, pick what to do, then tap Show Me!";
+}
+
+/* ========================= NUMBER GRIDS ========================= */
+let gridRows = 2, gridCols = 2;
+let gridOp = 'add';
+
+function buildGridInputs(containerId, rows, cols, readOnly){
+  const el = document.getElementById(containerId);
+  el.style.gridTemplateColumns = `repeat(${cols}, 56px)`;
+  el.innerHTML = '';
+  for(let i=0;i<rows*cols;i++){
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'grid-cell' + (readOnly ? ' readonly' : '');
+    inp.value = readOnly ? '' : '0';
+    if(readOnly) inp.readOnly = true;
+    el.appendChild(inp);
+  }
+}
+
+function setSize(rows, cols, btn){
+  gridRows = rows; gridCols = cols;
+  document.querySelectorAll('#size-row .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildGridInputs('gridA', rows, cols, false);
+  buildGridInputs('gridB', rows, cols, false);
+  document.getElementById('grid-result-wrap').style.display = 'none';
+  document.getElementById('grid-msg').textContent = '\u00A0';
+  refreshGridBVisibility();
+}
+
+function setGridOp(op, btn){
+  gridOp = op;
+  document.querySelectorAll('#op-row .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('scalar-row').style.display = (op === 'scale') ? 'flex' : 'none';
+  document.getElementById('grid-result-wrap').style.display = 'none';
+  document.getElementById('grid-msg').textContent = '\u00A0';
+  refreshGridBVisibility();
+}
+
+function refreshGridBVisibility(){
+  const needsB = (gridOp === 'add' || gridOp === 'sub');
+  document.getElementById('gridB-wrap').style.display = needsB ? 'block' : 'none';
+}
+
+function readGrid(containerId, rows, cols){
+  const cells = document.querySelectorAll('#'+containerId+' .grid-cell');
+  const values = [];
+  cells.forEach(c=>{
+    const v = parseFloat(c.value);
+    values.push(isNaN(v) ? 0 : v);
+  });
+  const grid = [];
+  for(let r=0;r<rows;r++) grid.push(values.slice(r*cols, r*cols+cols));
+  return grid;
+}
+
+function showResultGrid(grid, rows, cols){
+  const wrap = document.getElementById('grid-result-wrap');
+  wrap.style.display = 'block';
+  buildGridInputs('gridResult', rows, cols, true);
+  const cells = document.querySelectorAll('#gridResult .grid-cell');
+  const flat = grid.flat();
+  cells.forEach((c,i)=>{ c.value = flat[i]; });
+}
+
+function setGridFace(emoji, bounce){
+  const f = document.getElementById('grid-face');
+  f.textContent = emoji;
+  if(bounce){
+    f.classList.remove('bounce');
+    void f.offsetWidth;
+    f.classList.add('bounce');
+  }
+}
+
+function runGrid(){
+  const a = readGrid('gridA', gridRows, gridCols);
+  let result, rows = gridRows, cols = gridCols, msg = '';
+
+  if(gridOp === 'add' || gridOp === 'sub'){
+    const b = readGrid('gridB', gridRows, gridCols);
+    result = a.map((row,i)=>row.map((v,j)=> gridOp==='add' ? v + b[i][j] : v - b[i][j]));
+    msg = gridOp === 'add' ? "Grid A and Grid B, put together! 🧩" : "Grid B taken away from Grid A! ➖";
+  } else if(gridOp === 'scale'){
+    const k = parseFloat(document.getElementById('scalar-input').value);
+    if(isNaN(k)){
+      document.getElementById('grid-msg').textContent = "Pop a number in the multiply box first! 🙂";
+      setGridFace('🤔', true);
+      return;
+    }
+    result = a.map(row=>row.map(v=>v*k));
+    msg = `Every box got multiplied by ${k}! ✨`;
+  } else if(gridOp === 'flip'){
+    result = a[0].map((_,j)=>a.map(row=>row[j]));
+    rows = gridCols; cols = gridRows;
+    msg = "Spun the grid around! Rows became columns! 🔄";
+  }
+
+  showResultGrid(result, rows, cols);
+  document.getElementById('grid-msg').textContent = msg;
+  setGridFace('🤩', true);
+}
+
+/* Initialize grids on load */
+buildGridInputs('gridA', gridRows, gridCols, false);
+buildGridInputs('gridB', gridRows, gridCols, false);
+refreshGridBVisibility();
+</script>
+
+</body>
+</html>
